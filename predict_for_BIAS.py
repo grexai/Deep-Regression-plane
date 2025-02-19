@@ -13,6 +13,18 @@ from predict_ensemble import load_regression_plane_ensemble_models, predict_regr
 import torch
 import torchvision.transforms as transforms
 
+torch.cuda.set_device(2)
+
+
+def filter_coordinates(coords, center=np.array([5000, 5000]), radius_threshold=3500):
+    coords = np.array(coords)  # Ensure it's a NumPy array
+    distances = np.linalg.norm(coords - center, axis=1)  # Compute Euclidean distances
+    coords[distances < radius_threshold] = None  # Set values to None if below threshold
+    valid_indices = np.where(distances >= radius_threshold)[0]
+
+    return coords, valid_indices
+
+
 def convert_image_lists_to_batched_tensor(crops, target_size=(299, 299), device=None):
     """
     Convert a NumPy array of images to a PyTorch batched tensor with resizing, normalization, and device transfer.
@@ -124,30 +136,28 @@ for img_idx, file_name in enumerate(image_files):
     inception_image_tensor = convert_image_lists_to_batched_tensor(crops)
     restnet_image_tensor = convert_image_lists_to_batched_tensor(crops,(224,224))
     # Placeholder function (replace this with actual prediction logic)
-    preds, preds_reg_cls, preds_reg_idx, avg_layer_features, preds_reg_pos = predict_regression_plane_ensemble_models(regression_model,
-                                                                                                                      classification_model,
+    preds, pred_classes,_ = predict_regression_plane_ensemble_models(regression_model,                                                                                                  classification_model,
                                                                                                                       inception_image_tensor,
-                                                                                                                      restnet_image_tensor)
+                                                                                                                       restnet_image_tensor)
+    
+    
+    preds_filtered, valid_indexes = filter_coordinates(preds)                                                                         
 
-    # Convert regression plane data to polar coordinates
-    theta_list, radius_list = preds[:, 0], preds[:, 1]
-    radius_filter = radius_list > minimum_radius
-    agreement_filter = ~np.isnan(preds[:, 0])
-    idx_list_bool = radius_filter & agreement_filter
 
-    object_ids = idx_map[idx_list_bool]
-    preds_reg_idx_filtered = preds_reg_idx[idx_list_bool]
-    preds_reg_pos_filtered = preds_reg_pos[idx_list_bool]
-    bounding_boxes_filtered = bounding_boxes[idx_list_bool]
+
+    
+    preds_reg_idx_filtered = pred_classes[valid_indexes]
+    preds_reg_pos_filtered = preds[valid_indexes]
+    bounding_boxes_filtered = bounding_boxes[valid_indexes]
 
     # Convert data to dataframe
     df = pd.DataFrame({
         "Filename": [fname] * len(object_ids),
-        "ObjectID": object_ids.astype(int),
+        "ObjectID": valid_indexes.astype(int),
         "BoundingBox": [str(list(b)) for b in bounding_boxes_filtered],
         "PredsRegIdx": preds_reg_idx_filtered.astype(int),
-        "PredsRegPos": [str(list(p)) for p in preds_reg_pos_filtered],
-        "AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
+        "PredsRegPos": [str(list(p)) for p in preds_reg_pos_filtered]
+        #"AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
     })
 
     output_rows.append(df)

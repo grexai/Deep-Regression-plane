@@ -57,7 +57,7 @@ def predict_regression_plane_ensemble_models(inceptionmodel,
     # Apply the filtering: set pred_xy to None where the class difference is too large
     filtered_pred_xy = [pred_xy[i] if agreementIdx[i] else None for i in range(len(pred_xy))]
 
-    return filtered_pred_xy
+    return filtered_pred_xy, pred_class_from_coords, most_probable_classes_resnet
     
 
 if __name__== "__main__":
