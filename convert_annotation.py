@@ -6,7 +6,7 @@ from glob import glob
 
 # Base directory containing train, val, and test sets
 base_dir = r"d:\dev\DVP2\2022_v1_zeroPadded_split_with_test"
-
+base_dir = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test"
 
 # Function to extract (x, y) from label TIFF
 def extract_xy_from_tiff(label_path):
@@ -40,7 +40,7 @@ def rotate_90_ccw_around_5000(coord):
 
 
 # Process each dataset split
-for split in ["train", "val", "test"]:
+for split in ["trainBalAug_v2_2", "val", "test"]:
     image_dir = os.path.join(base_dir, split, "images")
     label_dir = os.path.join(base_dir, split, "labels")
     label2_dir = os.path.join(base_dir, split, "labels2")  # New folder for JSONs

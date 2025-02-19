@@ -8,7 +8,7 @@ from PIL import Image
 import json
 import os
 import glob
-
+from tqdm import tqdm
 
 # Custom dataset class for images with JSON annotations from labels2
 class ImageCoordinatesDataset(Dataset):
@@ -46,17 +46,28 @@ class ImageCoordinatesDataset(Dataset):
         return image, target, img_name  # Include img_name for saving predictions
 
 
-# Define image transformations
 transform = transforms.Compose([
-    transforms.Resize((299, 299)),  # InceptionV3 input size
+    transforms.Resize((299, 299)),
+    transforms.RandomHorizontalFlip(p=0.5),  # 50% chance to flip horizontally
+    transforms.RandomVerticalFlip(p=0.5),    # 50% chance to flip vertically
+    transforms.RandomAffine(
+        degrees=90,              # Random rotation between -30 and 30 degrees
+        translate=(0.1, 0.1),    # Random translation up to 10% of image size
+        scale=(0.9, 1.1),        # Random scaling between 80% and 120%
+    ),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
-
 # Paths
 base_dir = r"d:\dev\DVP2\2022_v1_zeroPadded_split_with_test"
-train_image_folder = os.path.join(base_dir, "train", "images")
-train_annotation_folder = os.path.join(base_dir, "train", "labels2")
+
+base_dir = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test"
+
+
+train_image_folder = os.path.join(base_dir, "trainBalAug_v2_2", "images")
+train_annotation_folder = os.path.join(base_dir, "trainBalAug_v2_2", "labels2")
+# train_image_folder = os.path.join(base_dir, "train", "images")
+# train_annotation_folder = os.path.join(base_dir,"train", "labels2")
 val_image_folder = os.path.join(base_dir, "val", "images")
 val_annotation_folder = os.path.join(base_dir, "val", "labels2")
 
@@ -64,8 +75,8 @@ val_annotation_folder = os.path.join(base_dir, "val", "labels2")
 train_dataset = ImageCoordinatesDataset(train_image_folder, train_annotation_folder, transform)
 val_dataset = ImageCoordinatesDataset(val_image_folder, val_annotation_folder, transform)
 
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=192, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=192, shuffle=False)
 
 # Load pretrained InceptionV3 model
 model = models.inception_v3(pretrained=True)
@@ -83,15 +94,15 @@ criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
 # Training loop with validation
-num_epochs = 0
+num_epochs = 20
 best_val_loss = float('inf')
 best_model_path = "best_model_inception.pth"
-
+final_model_path = "final_model_inception.pth"
 for epoch in range(num_epochs):
     model.train()
     total_train_loss = 0
 
-    for images, targets, _ in train_loader:  # Ignore img_name during training
+    for images, targets, _ in tqdm(train_loader):  # Ignore img_name during training
         images, targets = images.to(device), targets.to(device)
 
         optimizer.zero_grad()
@@ -125,7 +136,7 @@ for epoch in range(num_epochs):
         best_val_loss = avg_val_loss
         torch.save(model.state_dict(), best_model_path)
         print(f"New best model saved at epoch {epoch + 1}")
-
+torch.save(model.state_dict(), final_model_path)
 print("Training complete!")
 
 
