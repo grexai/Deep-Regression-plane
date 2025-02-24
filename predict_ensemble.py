@@ -63,7 +63,7 @@ def predict_regression_plane_ensemble_models(inceptionmodel,
 
     # Get indices where the mask is True
     filtered_pred_indices = np.where(mask)[0]
-    return filtered_pred_xy,filtered_pred_indices, pred_class_from_coords, most_probable_classes_resnet
+    return filtered_pred_xy,filtered_pred_indices, np.array(pred_class_from_coords), np.array(most_probable_classes_resnet)
     
 
 if __name__== "__main__":
