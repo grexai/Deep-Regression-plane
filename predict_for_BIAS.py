@@ -179,15 +179,24 @@ for img_idx, file_name in enumerate(image_files[:]):
     preds_reg_pos_filtered = preds[valid_indexes]
     bounding_boxes_filtered = bounding_boxes[valid_indexes]
 
-    # Convert data to dataframe
-    df = pd.DataFrame({
-        "Filename": [fname] * len(valid_indexes),
-        "ObjectID": valid_indexes.astype(int),
-        "BoundingBox": [str(list(b)) for b in bounding_boxes_filtered],
-        "PredsRegIdx": preds_reg_idx_filtered.astype(int),
-        "PredsRegPos": [str(list(p)) for p in preds_reg_pos_filtered]
-        #"AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
-    })
+
+# Unpacking BoundingBox into separate columns
+bb1, bb2, bb3, bb4 = zip(*[[int(x) for x in b] for b in bounding_boxes_filtered])
+prp1, prp2 = zip(*[[int(x) for x in p] for p in preds_reg_pos_filtered])
+
+# Convert data to DataFrame
+df = pd.DataFrame({
+    "Filename": [fname] * len(valid_indexes),
+    "ObjectID": valid_indexes.astype(int),
+    "BoundingBox1": bb1,
+    "BoundingBox2": bb2,
+    "BoundingBox3": bb3,
+    "BoundingBox4": bb4,
+    "PredsRegIdx": preds_reg_idx_filtered.astype(int),
+    "PredsRegPos1": prp1,
+    "PredsRegPos2": prp2
+    #"AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
+})
 
     output_rows.append(df)
 
