@@ -7,13 +7,13 @@ from scipy.io import loadmat
 import torch
 import torchvision.transforms as transforms
 from predict_ensemble import load_regression_plane_ensemble_models, predict_regression_plane_ensemble_models
-# Define paths
-
 
 import torch
 import torchvision.transforms as transforms
 
 torch.cuda.set_device(2)
+
+# Define paths
 
 
 def create_gird_image_from_crops(crops):
@@ -67,7 +67,7 @@ def convert_image_lists_to_batched_tensor(crops, target_size=(299, 299), device=
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Convert NumPy array to PyTorch tensor
-    crops_tensor = torch.tensor(crops, dtype=torch.float32)  # Convert to float tensor
+    crops_tensor = torch.tensor(crops/255.0, dtype=torch.float32)  # Convert to float tensor
 
     # Permute from (batch, H, W, C) -> (batch, C, H, W)
     crops_tensor = crops_tensor.permute(0, 3, 1, 2)  
@@ -86,7 +86,7 @@ def convert_image_lists_to_batched_tensor(crops, target_size=(299, 299), device=
     return crops_tensor
 
 
-regression_model_path = "./best_model_inception.pth"
+regression_model_path = "./best_model_inception_L1.pth"
 classification_model_path = "./best_model_resnet50.pth"
 # acc_folder = "d:/datasets/dvp2_sample_DRP/Proteomics-acc/221123-HK-DVP2-frame-60X-56__2022-11-23T11_30_34-Measurement1/"
 acc_folder = "/NAS/grexa/dvp2_sample_DRP/Proteomics-acc/221123-HK-DVP2-frame-60X-56__2022-11-23T11_30_34-Measurement1/"
@@ -99,8 +99,9 @@ classification_model_input_size = (224, 224)
 allowed_class_diff = 3
 minimum_radius = 3500
 # some BIAS projects exports the images as BGR instead of RGB
-switch_rb_channels = True
-# Device
+# DONT ASK THANKS
+switch_rb_channels = False
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Load models
 regression_model, classification_model = load_regression_plane_ensemble_models(regression_model_path, classification_model_path, device= device)
@@ -119,7 +120,7 @@ extra_folder = os.path.join(acc_folder, "extra")
 image_files = [f for f in os.listdir(an3_folder) if not f.startswith(".")]
 output_rows = []
 
-for img_idx, file_name in enumerate(image_files):
+for img_idx, file_name in enumerate(image_files[:]):
     print(f"Processing image {img_idx + 1}/{len(image_files)}: {file_name}")
     
     image_path = os.path.join(an3_folder, file_name)
@@ -162,8 +163,8 @@ for img_idx, file_name in enumerate(image_files):
 
     inception_image_tensor = convert_image_lists_to_batched_tensor(crops)
     restnet_image_tensor = convert_image_lists_to_batched_tensor(crops,(224,224))
-    # Placeholder function (replace this with actual prediction logic)
-    preds, pred_classes,_ = predict_regression_plane_ensemble_models(regression_model, 
+    
+    preds, agreement_indices, pred_classes,_ = predict_regression_plane_ensemble_models(regression_model, 
                                                                     classification_model,
                                                                     inception_image_tensor,
                                                                     restnet_image_tensor)

@@ -20,7 +20,7 @@ train_annotation_folder = os.path.join(base_dir, "trainBalAug_v2_2", "labels2")
 # train_annotation_folder = os.path.join(base_dir,"train", "labels2")
 val_image_folder = os.path.join(base_dir, "val", "images")
 val_annotation_folder = os.path.join(base_dir, "val", "labels2")
-num_epochs=0
+num_epochs=100
 
 # Inference function and save predictions
 def predict_and_save(model, image_folder, annotation_folder, output_json="predictions.json"):
@@ -115,7 +115,7 @@ transform_val = transforms.Compose([
 
 # Create dataset and dataloaders
 train_dataset = MitoticDataset(train_image_folder, train_annotation_folder, transform=transform)
-val_dataset = MitoticDataset(val_image_folder, val_annotation_folder, transform=transform)
+val_dataset = MitoticDataset(val_image_folder, val_annotation_folder, transform=transform_val)
 
 train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
