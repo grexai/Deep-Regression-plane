@@ -9,6 +9,7 @@ from PIL import Image
 
 # Base directory
 base_dir = r"d:\dev\DVP2\2022_v1_zeroPadded_split_with_test"
+base_dir = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test"
 
 # Choose dataset split (train, val, test)
 split = "test"  # Change to "train" or "test" if needed
@@ -63,4 +64,4 @@ plt.tight_layout()
 plt.imshow(canvas)
 plt.axis("off")
 plt.title(f"{split.upper()} Data Visualization")
-plt.show()
+plt.savefig("data visualization.jpg")

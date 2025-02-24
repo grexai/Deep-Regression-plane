@@ -30,7 +30,7 @@ Ensure the dataset is organized in the following structure:
 ```
 
 ### 4. Processing Annotations
-Each TIFF label file contains coordinate information, which is extracted and rotated 90° counterclockwise around the point `(5000, 5000)`. The processed coordinates are then saved as JSON files in the `labels2/` directory.
+Each TIFF label file contains coordinate information, which is extracted and rotated 90° counterclockwise around the point `(5000, 5000)` to match with the article. The processed coordinates are then saved as JSON files in the `labels2/` directory.
 
 ---
 
@@ -61,6 +61,6 @@ Use `predict_for_BIAS.py` to perform inference:
 
 ---
 
-## Acknowledgments
+## Citations
 
 This work builds upon previous research and tools developed for deep regression analysis of biological images.

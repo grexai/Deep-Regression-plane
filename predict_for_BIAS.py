@@ -16,6 +16,31 @@ import torchvision.transforms as transforms
 torch.cuda.set_device(2)
 
 
+def create_gird_image_from_crops(crops):
+    # Define number of images per row
+    images_per_row = 10
+    img_h, img_w, img_c = crops.shape[1:]  # Extract image dimensions
+
+    # Calculate number of full rows and remaining images
+    num_full_rows = len(crops) // images_per_row
+    num_remaining = len(crops) % images_per_row
+
+    # Pad the last row if necessary
+    if num_remaining > 0:
+        pad_width = (images_per_row - num_remaining, img_h, img_w, img_c)
+        padding = np.zeros(pad_width, dtype=np.uint8)  # Black padding
+        crops = np.concatenate([crops, padding], axis=0)
+
+    # Reshape into rows
+    rows = [np.concatenate(crops[i:i + images_per_row], axis=1) for i in range(0, len(crops), images_per_row)]
+
+    # Stack rows vertically
+    final_image = np.concatenate(rows, axis=0)
+
+    # Save the result
+    cv2.imwrite("concatenated.png", final_image)
+
+
 def filter_coordinates(coords, center=np.array([5000, 5000]), radius_threshold=3500):
     coords = np.array(coords)  # Ensure it's a NumPy array
     distances = np.linalg.norm(coords - center, axis=1)  # Compute Euclidean distances
@@ -53,7 +78,7 @@ def convert_image_lists_to_batched_tensor(crops, target_size=(299, 299), device=
 
     # Normalize using Inception's normalization
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    crops_tensor = normalize(crops_tensor / 255.0)
+    crops_tensor = normalize(crops_tensor)
 
     # Move tensor to the specified device
     crops_tensor = crops_tensor.to(device)
@@ -112,8 +137,10 @@ for img_idx, file_name in enumerate(image_files):
     num_cells = features.shape[0]
     bigger_input_size = max(regression_model_input_size, classification_model_input_size)
     crops = np.zeros((num_cells, *bigger_input_size, 3), dtype=np.uint8)
+    
+    # bounding boxes stored in x1,y1,x2,y2, Top left, bottom right
     bounding_boxes = np.zeros((num_cells, 4))
-
+    
     for cell_idx in range(num_cells):
         cx, cy = features[cell_idx, :2]
         ul = np.array([cy, cx]) - np.floor(np.array(bigger_input_size) / 2).astype(int)
@@ -136,9 +163,10 @@ for img_idx, file_name in enumerate(image_files):
     inception_image_tensor = convert_image_lists_to_batched_tensor(crops)
     restnet_image_tensor = convert_image_lists_to_batched_tensor(crops,(224,224))
     # Placeholder function (replace this with actual prediction logic)
-    preds, pred_classes,_ = predict_regression_plane_ensemble_models(regression_model,                                                                                                  classification_model,
-                                                                                                                      inception_image_tensor,
-                                                                                                                       restnet_image_tensor)
+    preds, pred_classes,_ = predict_regression_plane_ensemble_models(regression_model, 
+                                                                    classification_model,
+                                                                    inception_image_tensor,
+                                                                    restnet_image_tensor)
     
     
     preds_filtered, valid_indexes = filter_coordinates(preds)                                                                         
@@ -152,7 +180,7 @@ for img_idx, file_name in enumerate(image_files):
 
     # Convert data to dataframe
     df = pd.DataFrame({
-        "Filename": [fname] * len(object_ids),
+        "Filename": [fname] * len(valid_indexes),
         "ObjectID": valid_indexes.astype(int),
         "BoundingBox": [str(list(b)) for b in bounding_boxes_filtered],
         "PredsRegIdx": preds_reg_idx_filtered.astype(int),

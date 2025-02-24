@@ -9,7 +9,7 @@ import json
 import os
 import glob
 from tqdm import tqdm
-
+from regressionplane_utils import regression_to_class
 # Custom dataset class for images with JSON annotations from labels2
 class ImageCoordinatesDataset(Dataset):
     def __init__(self, image_folder, annotation_folder, transform=None):
@@ -35,6 +35,7 @@ class ImageCoordinatesDataset(Dataset):
         # Load the corresponding JSON file
         with open(json_path, "r") as f:
             data = json.load(f)
+        # origo centered data
         x, y = data["x"], data["y"]
 
         # Apply transformations
@@ -42,7 +43,7 @@ class ImageCoordinatesDataset(Dataset):
             image = self.transform(image)
 
         # Normalize (x, y) to [0, 1] for better learning
-        target = torch.tensor([x / 10000.0, y / 10000.0], dtype=torch.float32)
+        target = torch.tensor([x, y], dtype=torch.float32)
         return image, target, img_name  # Include img_name for saving predictions
 
 
@@ -58,6 +59,13 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
+
+transform_val = transforms.Compose([
+    transforms.Resize((299, 299)),
+    transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
 # Paths
 base_dir = r"d:\dev\DVP2\2022_v1_zeroPadded_split_with_test"
 
@@ -73,7 +81,7 @@ val_annotation_folder = os.path.join(base_dir, "val", "labels2")
 
 # Create dataset and dataloaders
 train_dataset = ImageCoordinatesDataset(train_image_folder, train_annotation_folder, transform)
-val_dataset = ImageCoordinatesDataset(val_image_folder, val_annotation_folder, transform)
+val_dataset = ImageCoordinatesDataset(val_image_folder, val_annotation_folder, transform_val)
 
 train_loader = DataLoader(train_dataset, batch_size=192, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=192, shuffle=False)
@@ -91,13 +99,14 @@ model.to(device)
 
 # Define loss function and optimizer
 criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+criterion = nn.L1Loss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop with validation
-num_epochs = 20
+num_epochs = 100
 best_val_loss = float('inf')
-best_model_path = "best_model_inception.pth"
-final_model_path = "final_model_inception.pth"
+best_model_path = "best_model_inception_L1.pth"
+final_model_path = "final_model_inception_L1.pth"
 for epoch in range(num_epochs):
     model.train()
     total_train_loss = 0
@@ -131,32 +140,42 @@ for epoch in range(num_epochs):
     # Print epoch results
     print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
 
-    # Save the best model
+    # Save the best 
     if avg_val_loss < best_val_loss:
         best_val_loss = avg_val_loss
         torch.save(model.state_dict(), best_model_path)
         print(f"New best model saved at epoch {epoch + 1}")
+    
 torch.save(model.state_dict(), final_model_path)
 print("Training complete!")
 
 
 # Inference function and save predictions
-def predict_and_save(model, image_folder, annotation_folder, output_json="predictions.json"):
+def predict_and_save(model, image_folder, output_json="predictions.json"):
     model.eval()
     predictions = {}
 
     image_files = glob.glob(os.path.join(image_folder, "*.jpg")) + glob.glob(os.path.join(image_folder, "*.png"))
+    
 
     for img_path in image_files:
         img_name = os.path.basename(img_path)
         image = Image.open(img_path).convert("RGB")
         image = transform(image).unsqueeze(0).to(device)
+        json_path = img_path.replace("images", "labels2").replace("jpg", "json")
 
+        with open(json_path, "r") as f:
+            current_gt = json.load(f)
+        
         with torch.no_grad():
-            pred = model(image).cpu().numpy()[0] * 10000  # Convert back to original scale
-
+            pred = model(image).cpu().numpy()[0]  # Convert back to original scale
+        
+        
         # Save predictions
-        predictions[img_name] = {"x": int(pred[0]), "y": int(pred[1])}
+        predictions[img_name] = {"x": int(pred[0]),
+                                "y": int(pred[1]),
+                                "class":regression_to_class([pred],shift=90)[0],
+                                "gt_class":regression_to_class([(current_gt["x"],current_gt["y"])],shift=90)[0]}
 
     # Write to JSON
     with open(output_json, "w") as f:
@@ -170,4 +189,4 @@ model.load_state_dict(torch.load(best_model_path))
 print(f"Loaded best model from {best_model_path}")
 # print(model.state_dict())
 # Run predictions on validation set and save results
-predict_and_save(model, val_image_folder, val_annotation_folder, "val_predictions.json")
+predict_and_save(model, val_image_folder, "val_inception_pred_predictions.json")

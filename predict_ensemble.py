@@ -23,7 +23,7 @@ def load_regression_plane_ensemble_models(incetion_path,  resnet_path,device):
     inception_model.eval()
     # print("InceptionV3 Last Layer Weights:", inception.state_dict())
     # Load ResNet50 model for 41 classes
-    resnet_model = models.resnet50(pretrained=False)
+    resnet_model = models.resnet50(pretrained=True)
     resnet_model.fc = nn.Linear(resnet_model.fc.in_features, 41)
     resnet_model.load_state_dict(torch.load(resnet_path))
     # Modify output layer
@@ -41,10 +41,11 @@ def predict_regression_plane_ensemble_models(inceptionmodel,
                                             allowed_class_diff=3):
     # Inference
     with torch.no_grad():
-        pred_xy = inceptionmodel(image_inception).cpu().numpy()*10000.0
+        pred_xy = inceptionmodel(image_inception).cpu().numpy()
+        
         pred_class = resnetmodel(image_resnet)
-        most_probable_classes_resnet = torch.argmax(pred_class, dim=1).cpu().numpy()        # Convert predicted coordinates to class
-    pred_class_from_coords = regression_to_class(pred_xy)
+        most_probable_classes_resnet = torch.argmax(pred_class, dim=0).cpu().numpy()        # Convert predicted coordinates to class
+    pred_class_from_coords = regression_to_class(pred_xy,shift=90)
    
     diff = np.abs(most_probable_classes_resnet - pred_class_from_coords)
 
@@ -75,7 +76,7 @@ if __name__== "__main__":
     transform_inception = transforms.Compose([
         transforms.Resize((299, 299)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     transform_resnet = transforms.Compose([
@@ -106,7 +107,7 @@ if __name__== "__main__":
             label_data = json.load(f)
 
         x_gt, y_gt = label_data["x"], label_data["y"]
-        gt_class = regression_to_class((x_gt, y_gt))
+        gt_class = regression_to_class([(x_gt, y_gt)],shift=90)[0]
 
         # Prepare images for both models
         img_inception = transform_inception(image).unsqueeze(0).to(device)
@@ -115,10 +116,10 @@ if __name__== "__main__":
 
         # Inference
         with torch.no_grad():
-            pred_xy = inception(img_inception).cpu().numpy()[0]*10000.0
+            pred_xy = inception(img_inception).cpu().numpy()[0]
             pred_class = resnet(img_resnet).argmax(dim=1).item()
             # Convert predicted coordinates to class
-        pred_class_from_coords = regression_to_class((pred_xy[0], pred_xy[1]))
+        pred_class_from_coords = regression_to_class([pred_xy],shift=90)[0]
             # Print results
         print(f"Image: {img_name}")
         print(f"  Ground Truth - Class: {gt_class}, Coordinates: ({x_gt}, {y_gt})")

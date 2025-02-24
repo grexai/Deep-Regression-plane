@@ -32,7 +32,7 @@ def regression_to_class(coords, center=(5000, 5000), shift=0):
         theta, r = regplane_to_polar(coord[0], coord[1], center, shift=shift)  # Apply 90° rotation
 
         if 15 <= theta <= 345:  # Mitotic classes
-            class_cat = 40 - int((theta - 15) / split_deg)  # Reverse the class order
+            class_cat = 40-int((theta - 15) / split_deg+1)  # Reverse the class order
         else:  # Interphase class
             class_cat = 0  # Interphase
 

@@ -40,7 +40,7 @@ def rotate_90_ccw_around_5000(coord):
 
 
 # Process each dataset split
-for split in ["trainBalAug_v2_2", "val", "test"]:
+for split in ["trainBalAug_v2_2", "train","val", "test"]:
     image_dir = os.path.join(base_dir, split, "images")
     label_dir = os.path.join(base_dir, split, "labels")
     label2_dir = os.path.join(base_dir, split, "labels2")  # New folder for JSONs
@@ -61,7 +61,7 @@ for split in ["trainBalAug_v2_2", "val", "test"]:
 
         # Extract (x, y) coordinates
         xy_data = extract_xy_from_tiff(label_path)
-        xy_data = rotate_90_ccw_around_5000(xy_data)
+        # xy_data = rotate_90_ccw_around_5000(xy_data)
 
         if xy_data is None:
             continue
