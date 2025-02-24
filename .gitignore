@@ -1,14 +1,21 @@
-*.pth
-*venv
-__pycache__/*
-__pycache__/*
+# Ignore Python bytecode
 *.pyc
-.idea*
+*.pyo
+__pycache__/
+*.pyd
+
+# Ignore virtual environments
+*venv/
+
+# Ignore temp directories
+temp*/
+
+# Ignore IDE/editor files
+.idea/
+
+# Ignore other file types
 *.pdf
 *.png
-temp/*
-temp/*
-temp*/
-*.json
-*__pycache__*
 *.jpg
+*.json
+*.pth
