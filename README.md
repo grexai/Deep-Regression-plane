@@ -2,13 +2,19 @@
 
 This repository contains the Python implementation of the Deep Regression Plane project, adapted from its original MATLAB version.
 
+python3.10, torch
+
+
 ## Data representation
 
+In the article, the data is represented on a circle centered at (5000, 5000). Interphase cells are located at 270° ± 15°. The remaining 330° is divided into 40 equal sections, each spanning 8.25°. The phases follow a clockwise (CW) order: Prophase → Prometaphase → Metaphase → Anaphase → Telophase.
 
+See the figure below:
 
 <img src="documentation_images/TRAIN_data_Visualization.png" width="600" height="600">
+However, in the labels file, Interphase is positioned at 0°–30°, and the remaining phases are arranged in a counterclockwise (CCW) direction from 30° to 360°.
 
-
+These differences are accounted for in regression_plane_utils.py.
 
 
 ## Data Preparation
