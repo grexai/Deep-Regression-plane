@@ -2,6 +2,10 @@
 
 This repository contains the Python implementation of the Deep Regression Plane project, adapted from its original MATLAB version.
 
+## Data representation
+
+
+
 ## Data Preparation
 
 ### 1. Download Dataset
@@ -60,6 +64,16 @@ Use `predict_for_BIAS.py` to perform inference:
 - Filters predictions where `radius > 3500`
 
 ---
+###Results
+
+Torch model were trained with L1 loss multiple epochs see train_inceptionv3.py
+
+The original model were trained with descripted hyperparameters in the article
+#### Torch model on test set <u>RMSE 360</u> vs the original MATLAB modell on test set <u>RMSE ~670</u>
+<img src="documentation_images/compare gt.jpg" width="350" height="350"><img src="documentation_images/matlab_test_ensemble.png" width="350" height="350">
+
+
+
 
 ## Citations
 
