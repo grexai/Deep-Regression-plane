@@ -68,8 +68,8 @@ def predict_regression_plane_ensemble_models(inceptionmodel,
 
 if __name__== "__main__":
     # Paths
-    image_folder = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test/val/images/"
-    label_folder = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test/val/labels2/"
+    image_folder = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test/test/images/"
+    label_folder = "/storage01/grexai/datasets/Regplane_data/2022_v1_zeroPadded_split_with_test/test/labels2/"
     # models
     regression_model_path = "./best_model_inception_L1.pth"
     classification_model_path = "./best_model_resnet50.pth"
@@ -141,7 +141,7 @@ if __name__== "__main__":
 
         # Scatter for ground truth point and annotation
         ax.scatter(x_gt, y_gt, color='red')
-        ax.annotate(f"{i},{gt_class}", (x_gt + offset_x, y_gt + offset_y))
+        # ax.annotate(f"{i},{gt_class}", (x_gt + offset_x, y_gt + offset_y))
 
         # Scatter for predicted point and annotation
         ax.scatter(pred_xy[0], pred_xy[1], color='blue')

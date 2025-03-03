@@ -10,11 +10,10 @@ from predict_ensemble import load_regression_plane_ensemble_models, predict_regr
 
 import torch
 import torchvision.transforms as transforms
-
+import matplotlib.pyplot as plt
 torch.cuda.set_device(2)
 
 # Define paths
-
 
 def create_gird_image_from_crops(crops):
     # Define number of images per row
@@ -86,6 +85,7 @@ def convert_image_lists_to_batched_tensor(crops, target_size=(299, 299), device=
     return crops_tensor
 
 
+
 regression_model_path = "./best_model_inception_L1.pth"
 classification_model_path = "./best_model_resnet50.pth"
 # acc_folder = "d:/datasets/dvp2_sample_DRP/Proteomics-acc/221123-HK-DVP2-frame-60X-56__2022-11-23T11_30_34-Measurement1/"
@@ -119,7 +119,7 @@ extra_folder = os.path.join(acc_folder, "extra")
 
 image_files = [f for f in os.listdir(an3_folder) if not f.startswith(".")]
 output_rows = []
-
+fig,ax,= plt.subplots(figsize=(8,8))
 for img_idx, file_name in enumerate(image_files[:]):
     print(f"Processing image {img_idx + 1}/{len(image_files)}: {file_name}")
     
@@ -180,23 +180,26 @@ for img_idx, file_name in enumerate(image_files[:]):
     bounding_boxes_filtered = bounding_boxes[valid_indexes]
 
 
-# Unpacking BoundingBox into separate columns
-bb1, bb2, bb3, bb4 = zip(*[[int(x) for x in b] for b in bounding_boxes_filtered])
-prp1, prp2 = zip(*[[int(x) for x in p] for p in preds_reg_pos_filtered])
-
-# Convert data to DataFrame
-df = pd.DataFrame({
-    "Filename": [fname] * len(valid_indexes),
-    "ObjectID": valid_indexes.astype(int),
-    "BoundingBox1": bb1,
-    "BoundingBox2": bb2,
-    "BoundingBox3": bb3,
-    "BoundingBox4": bb4,
-    "PredsRegIdx": preds_reg_idx_filtered.astype(int),
-    "PredsRegPos1": prp1,
-    "PredsRegPos2": prp2
-    #"AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
-})
+    # Unpacking BoundingBox into separate columns
+    bb1, bb2, bb3, bb4 = zip(*[[int(x) for x in b] for b in bounding_boxes_filtered])
+    prp1, prp2 = zip(*[[int(x) for x in p] for p in preds_reg_pos_filtered])
+    plt.scatter(preds[:,0],preds[:,1])
+    # Convert data to DataFrame
+    df = pd.DataFrame({
+        "Filename": [fname] * len(valid_indexes),
+        "ObjectID": valid_indexes.astype(int),
+        "BoundingBox1": bb1,
+        "BoundingBox2": bb2,
+        "BoundingBox3": bb3,
+        "BoundingBox4": bb4,
+        "PredsRegIdx": preds_reg_idx_filtered.astype(int),
+        "PredsRegPos1": prp1,
+        "PredsRegPos2": prp2
+        #"AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
+    })
+    
+    image_csv_path = os.path.join(out_folder, f"{os.path.splitext(file_name)[0]}.csv")
+    df.to_csv(image_csv_path, index=False)
 
     output_rows.append(df)
 
