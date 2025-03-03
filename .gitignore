@@ -7,6 +7,9 @@ __pycache__/
 # Ignore virtual environments
 *venv/
 
+# no ignore stuff from here
+!documentation_images/*.png
+!documentation_images/*.jpg
 # Ignore temp directories
 temp*/
 
