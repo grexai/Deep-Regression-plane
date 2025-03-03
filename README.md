@@ -6,6 +6,11 @@ This repository contains the Python implementation of the Deep Regression Plane 
 
 
 
+<img src="documentation_images/TRAIN_data_Visualization.png" width="600" height="600">
+
+
+
+
 ## Data Preparation
 
 ### 1. Download Dataset
