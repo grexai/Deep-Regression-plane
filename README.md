@@ -12,6 +12,7 @@ In the article, the data is represented on a circle centered at (5000, 5000). In
 See the figure below:
 
 <img src="documentation_images/TRAIN_data_Visualization.png" width="600" height="600">
+
 However, in the labels file, Interphase is positioned at 0°–30°, and the remaining phases are arranged in a counterclockwise (CCW) direction from 30° to 360°.
 
 These differences are accounted for in regression_plane_utils.py.
