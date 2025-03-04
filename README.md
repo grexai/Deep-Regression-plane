@@ -20,7 +20,14 @@ These differences are accounted for in regression_plane_utils.py.
 ## Data Preparation
 
 ### 1. Download Dataset
-The dataset can be downloaded from [Zenodo](<insert-zenodo-link-here>).
+
+### DRP Raw data<br>
+Preparation required, please run the scripts written in Dataset Preparation section<br>
+https://doi.org/10.5281/zenodo.13896968 <br>
+
+### Prepared dataset
+Doesnet require to run dataset preparation section. This dataset is splitted and augmented training data:<br> https://doi.org/10.5281/zenodo.14945967 <br>
+
 
 ### 2. Convert Annotations
 Once downloaded, the dataset must be converted to JSON format using the `convert_annotation.py` script.
@@ -75,7 +82,7 @@ Use `predict_for_BIAS.py` to perform inference:
 - Filters predictions where `radius > 3500`
 
 ---
-###Results
+### Results
 
 Torch model were trained with L1 loss multiple epochs see train_inceptionv3.py
 
