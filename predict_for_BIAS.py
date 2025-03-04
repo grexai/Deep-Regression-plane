@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 torch.cuda.set_device(2)
 
 # Define paths
-
 def create_gird_image_from_crops(crops):
     # Define number of images per row
     images_per_row = 10
@@ -83,6 +82,38 @@ def convert_image_lists_to_batched_tensor(crops, target_size=(299, 299), device=
     crops_tensor = crops_tensor.to(device)
 
     return crops_tensor
+
+import os
+import pandas as pd
+import numpy as np
+
+def writeCSV4BIASimport(path, preds_filtered):
+    os.makedirs(path, exist_ok=True)  # Create directory if it doesn't exist
+    imNames = preds_filtered['ImageName'].unique()  # Get unique image names
+    midCoor = [0.5, 0.5]  # Middle coordinates
+    for imName in imNames:
+        idx = preds_filtered['ImageName'] == imName  # Find matching rows
+        fileExEx = os.path.splitext(imName)[0]  # Get file name without extension
+        id = preds_filtered.loc[idx, 'ObjectNumber'].values  # Get ObjectNumber for the matching rows
+        classID = np.ones(len(id))  # Class ID is always 1
+        predCoor = preds_filtered.loc[idx, ['regPosX', 'regPosY']].values  # Get predicted coordinates
+        
+        # Calculate Cluster_1 as the Euclidean distance to middle coordinate
+        Cluster_1 = np.round(np.linalg.norm(midCoor - predCoor, axis=1) * 10000)
+        
+        # Create DataFrame for output
+        outputTable = pd.DataFrame({
+            'id': id,
+            'PREDICTED CLASS ID': classID,
+            'CLASS 1 #d5ff00 Cluster_1': Cluster_1
+        })
+        
+        # Write to CSV
+        outputTable.to_csv(os.path.join(path, f"{fileExEx}.csv"), index=False)
+
+# Example usage
+# writeCSV4BIASimport('your/path', preds_filtered_dataframe)
+
 
 
 
@@ -197,9 +228,22 @@ for img_idx, file_name in enumerate(image_files[:]):
         "PredsRegPos2": prp2
         #"AvgLayerFeatures": [str(list(f)) for f in avg_layer_features.T[idx_list_bool]]
     })
-    
-    image_csv_path = os.path.join(out_folder, f"{os.path.splitext(file_name)[0]}.csv")
-    df.to_csv(image_csv_path, index=False)
+
+    # Create DataFrame with the structure similar to the MATLAB code
+    biasData = pd.DataFrame({
+        'ObjectID': valid_indexes.astype(int),
+        'PredsRegIdx': preds_reg_idx_filtered.astype(int),
+    })
+    # Add the radius values
+
+    '''
+    todo radius array calc
+    '''
+    # for i in range(radiusArray.shape[1]):
+    #     biasData[f'Var{i+1}'] = radiusArray[:, i]
+    # writeCSV4BIASimport(out_folder,  f"{os.path.splitext(file_name)[0]}.csv")
+    # image_csv_path = os.path.join(out_folder, f"{os.path.splitext(file_name)[0]}.csv")
+    # df.to_csv(image_csv_path, index=False)
 
     output_rows.append(df)
 
